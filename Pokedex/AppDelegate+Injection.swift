@@ -1,6 +1,6 @@
 //
 //  AppDelegate+Injection.swift
-//  Smed1Bank
+//  Pokedex
 //
 //  Created by thomsmed on 17/04/2020.
 //  Copyright © 2020 Thomas A. Smedmann. All rights reserved.
@@ -11,6 +11,7 @@ import Resolver
 
 extension Resolver: ResolverRegistering {
     public static func registerAllServices() {
-        register { PokeApiClient() as ApiClient }
+        register { PokeApiApiClient() as ApiClient }
+        register { DummyPokedex() as Pokedex }
     }
 }

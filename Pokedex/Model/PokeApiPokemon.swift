@@ -1,6 +1,6 @@
 //
 //  Pokemon.swift
-//  pokedex
+//  Pokedex
 //
 //  Created by Thomas A. Smedmann on 05/09/2019.
 //  Copyright © 2019 Thomas A. Smedmann. All rights reserved.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Pokemon: Decodable {
+struct PokeApiPokemon: Decodable {
     var identifier: Int
     var name: String
     var baseExperience: Int
@@ -21,13 +21,13 @@ struct Pokemon: Decodable {
 //    var heldItems: [Any]
     var locationAreaEncounters: String
 //    var moves: [Any]
-    var sprites: PokemonSprites
+    var sprites: PokeApiPokemonSprites
 //    var species: Any
 //    var stats: [Any]
 //    var types: [Any]
 }
 
-struct PokemonSprites: Decodable {
+struct PokeApiPokemonSprites: Decodable {
     var backFemale: String
     var backShinyFemale: String
     var backDefault: String
@@ -38,14 +38,14 @@ struct PokemonSprites: Decodable {
     var frontShiny: String
 }
 
-struct PokemonPageItem: Decodable {
+struct PokeApiPokemonPageItem: Decodable {
     var name: String
     var url: String
 }
 
-struct PokemonPage: Decodable {
+struct PokeApiPokemonPage: Decodable {
     var count: Int
     var next: String?
     var previous: String?
-    var results: [PokemonPageItem]?
+    var results: [PokeApiPokemonPageItem]?
 }

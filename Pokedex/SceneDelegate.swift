@@ -1,6 +1,6 @@
 //
 //  SceneDelegate.swift
-//  Smed1Bank
+//  Pokedex
 //
 //  Created by thomsmed on 17/04/2020.
 //  Copyright © 2020 Thomas A. Smedmann. All rights reserved.

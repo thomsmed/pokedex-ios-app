@@ -8,14 +8,14 @@
 
 import Foundation
 
-class PokeApiClient: ApiClient {
+class PokeApiApiClient: ApiClient {
     static let baseUrl: String = "https://pokeapi.co/api/v2/"
 
     func requestResouce<T: Decodable>(_ resource: String,
                                       withParams params: [String: String]?,
                                       completionHandler callback: @escaping (_ result: T?, _ error: Error?) -> Void) {
 
-        var urlString = "\(PokeApiClient.baseUrl)\(resource)"
+        var urlString = "\(PokeApiApiClient.baseUrl)\(resource)"
 
         if let paramsDictionary = params {
             urlString += "?"

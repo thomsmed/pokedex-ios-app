@@ -10,13 +10,13 @@ import UIKit
 import Resolver
 
 class PokemonDetailViewController: UIViewController {
-    
+
     @Injected var pokedex: Pokedex
 
     // MARK: Properties
     var pokedexPageItem: PokedexPageItem? {
         didSet {
-            configureView()
+            initialize()
         }
     }
     private var pokemon: Pokemon? {
@@ -26,16 +26,18 @@ class PokemonDetailViewController: UIViewController {
     }
 
     // MARK: Outlets
-
+    @IBOutlet var imageView: UIImageView!
+    
     // MARK: Overrides
     override func viewDidLoad() {
         super.viewDidLoad()
-        configureView()
+        initialize()
+        prepareView()
     }
 
     // MARK: Methods
-    private func configureView() {
-        guard let pokemon = pokedexPageItem else {
+    private func initialize() {
+        guard let pokedexPageItem = pokedexPageItem else {
             return
         }
 
@@ -44,15 +46,29 @@ class PokemonDetailViewController: UIViewController {
             navigationItem.leftItemsSupplementBackButton = true
         }
 
-        navigationItem.title = pokemon.name
-        
-        pokedex.pokemon(number: pokemon.number, completionHandler: { (pokemon: Pokemon?) -> Void in
+        pokedex.pokemon(number: pokedexPageItem.number, completionHandler: { (pokemon: Pokemon?) -> Void in
             self.pokemon = pokemon
         })
     }
     
-    private func updateView() {
+    private func prepareView() {
+        guard let pokedexPageItem = pokedexPageItem else {
+            return
+        }
         
+        pokemon = Pokemon(number: pokedexPageItem.number,
+                          name: pokedexPageItem.name,
+                          type: pokedexPageItem.type,
+                          image: pokedexPageItem.image)
+    }
+
+    private func updateView() {
+        guard let pokemon = pokemon else {
+            return
+        }
+        
+        navigationItem.title = pokemon.name
+        imageView.image = pokemon.image
     }
 
 }

@@ -27,7 +27,7 @@ class PokemonDetailViewController: UIViewController {
 
     // MARK: Outlets
     @IBOutlet var imageView: UIImageView!
-    
+
     // MARK: Overrides
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -50,12 +50,12 @@ class PokemonDetailViewController: UIViewController {
             self.pokemon = pokemon
         })
     }
-    
+
     private func prepareView() {
         guard let pokedexPageItem = pokedexPageItem else {
             return
         }
-        
+
         pokemon = Pokemon(number: pokedexPageItem.number,
                           name: pokedexPageItem.name,
                           type: pokedexPageItem.type,
@@ -66,7 +66,7 @@ class PokemonDetailViewController: UIViewController {
         guard let pokemon = pokemon else {
             return
         }
-        
+
         navigationItem.title = pokemon.name
         imageView.image = pokemon.image
     }

@@ -14,7 +14,7 @@ class DummyPokedex: Pokedex {
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1, execute: {
             let thePokemon = self.pokemon.count <= number ? self.pokemon[number - 1] : nil
             DispatchQueue.main.async {
-                completionHandler(thePokemon)                
+                completionHandler(thePokemon)
             }
         })
     }
@@ -24,11 +24,17 @@ class DummyPokedex: Pokedex {
             if number != 1 {
                 return completionHandler(nil)
             }
-            
-            let pokedexPage = PokedexPage(number: 1, totalPagesCount: 1, totalItemsCount: self.pokemon.count, items: self.pokemon.map({ pokemon in
-                return PokedexPageItem(number: pokemon.number, name: pokemon.name, type: pokemon.type, image: pokemon.image)
+
+            let pokedexPage = PokedexPage(number: 1,
+                                          totalPagesCount: 1,
+                                          totalItemsCount: self.pokemon.count,
+                                          items: self.pokemon.map({ pokemon in
+                return PokedexPageItem(number: pokemon.number,
+                                       name: pokemon.name,
+                                       type: pokemon.type,
+                                       image: pokemon.image)
             }))
-            
+
             DispatchQueue.main.async {
                 completionHandler(pokedexPage)
             }

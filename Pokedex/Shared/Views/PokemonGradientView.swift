@@ -38,14 +38,7 @@ class PokemonGradientView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        updateLayerMask()
-    }
-
-    private func addMaskLayer() {
-        let maskLayer = CAGradientLayer()
-        maskLayer.colors = [UIColor.black.cgColor, UIColor.clear]
-        
-        layer.mask = maskLayer
+        updateMaskLayer()
     }
 
     private func initLayer() {
@@ -59,26 +52,22 @@ class PokemonGradientView: UIView {
         addMaskLayer()
     }
 
-    private func updateLayerMask() {
+    private func addMaskLayer() {
+        let maskLayer = CAGradientLayer()
+        maskLayer.colors = [UIColor.black.cgColor, UIColor.clear]
+
+        layer.mask = maskLayer
+    }
+
+    private func updateMaskLayer() {
         guard let mask = layer.mask else {
             return
         }
 
-        let oldFrame = mask.frame
-        mask.frame = bounds
-        mask.removeAllAnimations()
-
-        guard oldFrame.width >= bounds.width else {
-            return
+        if bounds.width > mask.frame.width {
+            mask.frame = bounds
+            mask.removeAllAnimations()
         }
-
-        guard let animationKeys = layer.animationKeys() else {
-            return
-        }
-
-        animationKeys.map({ key in (key, layer.animation(forKey: key)!)}).forEach({ tuple in
-            mask.add(tuple.1, forKey: tuple.0)
-        })
     }
 
     private func updateLayer() {

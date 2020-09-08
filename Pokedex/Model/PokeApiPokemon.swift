@@ -9,43 +9,45 @@
 import Foundation
 
 struct PokeApiPokemon: Decodable {
-    var identifier: Int
-    var name: String
-    var baseExperience: Int
-    var height: Int
-    var isDefault: Bool
-    var order: Int
-    var weight: Int
-//    var forms: [Any]
-//    var gameIndices: [Any]
-//    var heldItems: [Any]
-    var locationAreaEncounters: String
-//    var moves: [Any]
-    var sprites: PokeApiPokemonSprites
-//    var species: Any
-//    var stats: [Any]
-//    var types: [Any]
+    let number: Int
+    let name: String
+    let order: Int
+    let height: Int
+    let weight: Int
+    let sprites: PokeApiPokemonSprites
+    
+    enum CodingKeys: String, CodingKey {
+        case number = "id"
+        case name
+        case order
+        case height
+        case weight
+        case sprites
+    }
 }
 
 struct PokeApiPokemonSprites: Decodable {
-    var backFemale: String
-    var backShinyFemale: String
-    var backDefault: String
-    var frontFemale: String
-    var frontShinyFemale: String
-    var backShiny: String
-    var frontDefault: String
-    var frontShiny: String
+    let frontDefault: String
+    let frontShiny: String
+    let backDefault: String
+    let backShiny: String
+
+    enum CodingKeys: String, CodingKey {
+        case frontDefault = "front_default"
+        case backDefault = "back_default"
+        case frontShiny = "front_shiny"
+        case backShiny = "back_shiny"
+    }
 }
 
 struct PokeApiPokemonPageItem: Decodable {
-    var name: String
-    var url: String
+    let name: String
+    let url: String
 }
 
 struct PokeApiPokemonPage: Decodable {
-    var count: Int
-    var next: String?
-    var previous: String?
-    var results: [PokeApiPokemonPageItem]?
+    let count: Int
+    let next: String?
+    let previous: String?
+    let results: [PokeApiPokemonPageItem]
 }

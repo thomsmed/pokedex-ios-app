@@ -12,6 +12,6 @@ import Resolver
 extension Resolver: ResolverRegistering {
     public static func registerAllServices() {
         register { PokeApiApiClient() as ApiClient }
-        register { DummyPokedex() as Pokedex }
+        register { PokeApiPokedex() as Pokedex }
     }
 }

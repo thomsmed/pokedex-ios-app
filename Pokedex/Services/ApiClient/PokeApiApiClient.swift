@@ -8,9 +8,15 @@
 
 import Foundation
 
+enum PokeApiApiClientError: Error {
+    case noResponse
+    case wrongMimeType
+}
+
 class PokeApiApiClient: ApiClient {
     static let baseUrl: String = "https://pokeapi.co/api/v2/"
 
+    // TODO: RETURN RESULT WITH SUCCESS(T) AND FAILURE(ERROR)
     func requestResouce<T: Decodable>(_ resource: String,
                                       withParams params: [String: String]?,
                                       completionHandler callback: @escaping (_ result: T?, _ error: Error?) -> Void) {
@@ -26,29 +32,30 @@ class PokeApiApiClient: ApiClient {
 
         let url = URL(string: urlString)!
 
-        URLSession.shared.dataTask(with: url, completionHandler: { data, response, error in
+        URLSession.shared.dataTask(with: url,
+                                   completionHandler: { (data: Data?, response: URLResponse?, error: Error?) in
 
             if let error = error {
                 return callback(nil, error)
             }
 
             guard let httpResponse = response as? HTTPURLResponse else {
-                return callback(nil, nil)
+                return callback(nil, PokeApiApiClientError.noResponse)
             }
 
-            if let mimeType = httpResponse.mimeType, mimeType == "application/json", let data = data {
-
-                let decoder = JSONDecoder()
-                do {
-                    let result = try decoder.decode(T.self, from: data)
-                    return callback(result, nil)
-                } catch {
-                    print(error)
-                    return callback(nil, nil)
-                }
+            guard let mimeType = httpResponse.mimeType,
+                  mimeType == "application/json",
+                  let data = data else {
+                return callback(nil, PokeApiApiClientError.wrongMimeType)
             }
 
-            return callback(nil, nil)
+            let decoder = JSONDecoder()
+            do {
+                let result = try decoder.decode(T.self, from: data)
+                callback(result, nil)
+            } catch {
+                callback(nil, error)
+            }
 
         }).resume()
     }

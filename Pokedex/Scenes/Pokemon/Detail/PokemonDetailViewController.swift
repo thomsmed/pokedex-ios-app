@@ -10,7 +10,6 @@ import UIKit
 import Resolver
 
 class PokemonDetailViewController: UIViewController {
-
     @Injected var pokedex: Pokedex
 
     // MARK: Properties
@@ -46,7 +45,8 @@ class PokemonDetailViewController: UIViewController {
             navigationItem.leftItemsSupplementBackButton = true
         }
 
-        pokedex.pokemon(number: pokedexPageItem.number, completionHandler: { (pokemon: Pokemon?) -> Void in
+        pokedex.pokemon(number: pokedexPageItem.number,
+                        completionHandler: { (pokemon: Pokemon?, _: Error?) -> Void in
             self.pokemon = pokemon
         })
     }
@@ -56,10 +56,7 @@ class PokemonDetailViewController: UIViewController {
             return
         }
 
-        pokemon = Pokemon(number: pokedexPageItem.number,
-                          name: pokedexPageItem.name,
-                          type: pokedexPageItem.type,
-                          image: pokedexPageItem.image)
+        navigationItem.title = pokedexPageItem.name
     }
 
     private func updateView() {
@@ -68,7 +65,7 @@ class PokemonDetailViewController: UIViewController {
         }
 
         navigationItem.title = pokemon.name
-        imageView.image = pokemon.image
+//        imageView.image = pokemon.image
     }
 
 }

@@ -22,9 +22,7 @@ struct Pokemon {
     let number: Int
     let name: String
     let type: PokemonType
-    let image: UIImage
-//    let height: Int
-//    let weight: Int
+    let image: String
 }
 
 struct PokedexPage {
@@ -37,6 +35,4 @@ struct PokedexPage {
 struct PokedexPageItem {
     let number: Int
     let name: String
-    let type: PokemonType
-    let image: UIImage
 }

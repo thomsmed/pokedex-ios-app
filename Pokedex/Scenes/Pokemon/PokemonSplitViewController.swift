@@ -10,8 +10,8 @@ import Foundation
 import UIKit
 
 class PokemonSplitViewController: UISplitViewController {
-
     let displayModeBarButtonItem: UIBarButtonItem = UIBarButtonItem()
+
     private var displayModeBarButtonItemImage: UIImage?
 
     override func viewDidLoad() {

@@ -9,8 +9,7 @@
 import UIKit
 import Resolver
 
-class PokemonListViewController: UITableViewController, UITableViewDataSourcePrefetching {
-
+class PokemonListViewController: UITableViewController {
     @Injected var pokedex: Pokedex
 
     var items: [PokedexPageItem] = []
@@ -62,10 +61,9 @@ class PokemonListViewController: UITableViewController, UITableViewDataSourcePre
         if fetchInProgress {
             return
         }
-
         fetchInProgress = true
 
-        pokedex.page(number: 1, completionHandler: { (pokedexPage: PokedexPage?) -> Void in
+        pokedex.page(number: 1, completionHandler: { (pokedexPage: PokedexPage?, _: Error?) -> Void in
             self.totalItemsCount = pokedexPage?.totalItemsCount ?? 0
             self.pageNumber = (pokedexPage?.number ?? 1) + 1
             self.noMoreToLoad = pokedexPage?.number == pokedexPage?.totalPagesCount
@@ -73,6 +71,7 @@ class PokemonListViewController: UITableViewController, UITableViewDataSourcePre
             if let items = pokedexPage?.items {
                 self.items = items
                 self.tableView.reloadData()
+                self.populateVisiblePokemon()
             }
             self.refreshControl?.endRefreshing()
 
@@ -85,8 +84,9 @@ class PokemonListViewController: UITableViewController, UITableViewDataSourcePre
         if fetchInProgress || noMoreToLoad {
             return
         }
+        fetchInProgress = true
 
-        pokedex.page(number: pageNumber, completionHandler: { (pokedexPage: PokedexPage?) -> Void in
+        pokedex.page(number: pageNumber, completionHandler: { (pokedexPage: PokedexPage?, _: Error?) -> Void in
             self.pageNumber = (pokedexPage?.number ?? 1) + 1
             self.noMoreToLoad = pokedexPage?.number == pokedexPage?.totalItemsCount
 
@@ -99,6 +99,7 @@ class PokemonListViewController: UITableViewController, UITableViewDataSourcePre
                     let lastIndexPath = indexPathsForVisibleRows.last {
                     if firstIndexPath.row > currentCount || lastIndexPath.row < items.count {
                         self.tableView.reloadData()
+                        self.populateVisiblePokemon()
                     }
                 }
             }
@@ -106,14 +107,46 @@ class PokemonListViewController: UITableViewController, UITableViewDataSourcePre
             self.fetchInProgress = false
         })
     }
-
-    func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
-        if let lastIndexPath = indexPaths.last, lastIndexPath.row > items.count {
-            self.fetchPokemon()
-        }
+    
+    private func populateVisiblePokemon() {
+//        tableView.visibleCells.forEach({ (cell: UITableViewCell) in
+//            guard let cell = cell as? PokemonTableViewCell else {
+//                return
+//            }
+//
+//            self.pokedex.pokemon(number: cell.number, completionHandler: {[weak cell] (pokemon: Pokemon?, error: Error?) in
+//                guard let pokemon = pokemon else {
+//                    return
+//                }
+//
+//                guard let cell = cell, cell.number == pokemon.number else {
+//                    return
+//                }
+//
+//                cell.textLabel?.text = (cell.textLabel?.text ?? "") + "(Nr: \(pokemon.number))"
+//            })
+//        })
     }
+}
 
-    // MARK: - Table View
+// MARK: - UIScrollViewDelegate
+extension PokemonListViewController {
+    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        
+        
+    }
+    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        
+    }
+}
+
+// MARK: - UITableViewDelegate
+extension PokemonListViewController {
+    
+}
+
+// MARK: - UITableViewDataSource
+extension PokemonListViewController {
     override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
@@ -123,8 +156,12 @@ class PokemonListViewController: UITableViewController, UITableViewDataSourcePre
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as? PokemonTableViewCell else {
+            return UITableViewCell()
+        }
 
+        cell.number = indexPath.row + 1
+        
         if indexPath.row >= items.count {
             cell.textLabel?.text = "..."
             cell.detailTextLabel?.text = ""
@@ -133,10 +170,22 @@ class PokemonListViewController: UITableViewController, UITableViewDataSourcePre
             let pokemon = items[indexPath.row]
             cell.textLabel?.text = pokemon.name
             cell.detailTextLabel?.text = "Nr.: \(pokemon.number)"
-            cell.imageView?.image = pokemon.image
+//            cell.imageView?.image = pokemon.image
         }
 
         return cell
     }
+}
 
+// MARK: - UITableViewDataSourcePrefetching
+extension PokemonListViewController: UITableViewDataSourcePrefetching {
+    func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
+        if let lastIndexPath = indexPaths.last, lastIndexPath.row > items.count {
+            self.fetchPokemon()
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, cancelPrefetchingForRowsAt indexPaths: [IndexPath]) {
+        // TODO?
+    }
 }

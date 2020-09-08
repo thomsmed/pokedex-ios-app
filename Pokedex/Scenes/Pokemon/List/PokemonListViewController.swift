@@ -9,10 +9,18 @@
 import UIKit
 import Resolver
 
+struct PokemonListItem {
+    let number: Int
+    var name: String
+    var type: PokemonType?
+    var image: String?
+    var hasFullyLoaded: Bool = false
+}
+
 class PokemonListViewController: UITableViewController {
     @Injected var pokedex: Pokedex
 
-    var items: [PokedexPageItem] = []
+    var items: [PokemonListItem] = []
     var pageNumber = 1
     var totalItemsCount = 0
     var fetchInProgress = false
@@ -52,7 +60,7 @@ class PokemonListViewController: UITableViewController {
         }
 
         let selectedPokemon = items[indexPath.row]
-        pokemonDetailViewController.pokedexPageItem = selectedPokemon
+        pokemonDetailViewController.pokemonListItem = selectedPokemon
     }
 
     // MARK: - Refresh Control
@@ -69,9 +77,8 @@ class PokemonListViewController: UITableViewController {
             self.noMoreToLoad = pokedexPage?.number == pokedexPage?.totalPagesCount
 
             if let items = pokedexPage?.items {
-                self.items = items
+                self.items = items.map({ item in PokemonListItem(number: item.number, name: item.name)})
                 self.tableView.reloadData()
-                self.populateVisiblePokemon()
             }
             self.refreshControl?.endRefreshing()
 
@@ -92,14 +99,13 @@ class PokemonListViewController: UITableViewController {
 
             if let items = pokedexPage?.items {
                 let currentCount = self.items.count
-                self.items.append(contentsOf: items)
+                self.items.append(contentsOf: items.map({ item in PokemonListItem(number: item.number, name: item.name)}))
 
                 let indexPathsForVisibleRows = self.tableView.indexPathsForVisibleRows ?? []
                 if let firstIndexPath = indexPathsForVisibleRows.first,
                     let lastIndexPath = indexPathsForVisibleRows.last {
                     if firstIndexPath.row > currentCount || lastIndexPath.row < items.count {
                         self.tableView.reloadData()
-                        self.populateVisiblePokemon()
                     }
                 }
             }
@@ -108,7 +114,7 @@ class PokemonListViewController: UITableViewController {
         })
     }
     
-    private func populateVisiblePokemon() {
+//    private func populateVisiblePokemon() {
 //        tableView.visibleCells.forEach({ (cell: UITableViewCell) in
 //            guard let cell = cell as? PokemonTableViewCell else {
 //                return
@@ -126,23 +132,27 @@ class PokemonListViewController: UITableViewController {
 //                cell.textLabel?.text = (cell.textLabel?.text ?? "") + "(Nr: \(pokemon.number))"
 //            })
 //        })
-    }
+//    }
 }
 
 // MARK: - UIScrollViewDelegate
 extension PokemonListViewController {
     override func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        
-        
+
     }
+    
     override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        
+
+    }
+    
+    override func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+
     }
 }
 
 // MARK: - UITableViewDelegate
 extension PokemonListViewController {
-    
+
 }
 
 // MARK: - UITableViewDataSource
@@ -160,17 +170,36 @@ extension PokemonListViewController {
             return UITableViewCell()
         }
 
-        cell.number = indexPath.row + 1
+//        cell.number = indexPath.row + 1
         
         if indexPath.row >= items.count {
             cell.textLabel?.text = "..."
             cell.detailTextLabel?.text = ""
             cell.imageView?.image = UIImage()
         } else {
-            let pokemon = items[indexPath.row]
-            cell.textLabel?.text = pokemon.name
-            cell.detailTextLabel?.text = "Nr.: \(pokemon.number)"
-//            cell.imageView?.image = pokemon.image
+            var pokedexPageItem = items[indexPath.row]
+            cell.textLabel?.text = pokedexPageItem.name
+            cell.detailTextLabel?.text = "Nr.: \(pokedexPageItem.number)"
+            
+            if !pokedexPageItem.hasFullyLoaded {
+                pokedexPageItem.hasFullyLoaded = true
+                items[indexPath.row] = pokedexPageItem
+                pokedex.pokemon(number: pokedexPageItem.number, completionHandler: {(pokemon: Pokemon?, error: Error?) in
+                    var pokedexPageItem = self.items[indexPath.row]
+                    
+                    if let pokemon = pokemon {
+                        pokedexPageItem.name += " (Nr: \(pokemon.number))"
+                        pokedexPageItem.image = pokemon.image
+                        
+                        self.items[indexPath.row] = pokedexPageItem
+                        self.tableView.reloadRows(at: [IndexPath(row: pokemon.number - 1, section: 0)], with: .fade)
+                    } else {
+                        pokedexPageItem.hasFullyLoaded = false
+                        self.items[indexPath.row] = pokedexPageItem
+                    }
+
+                })
+            }
         }
 
         return cell

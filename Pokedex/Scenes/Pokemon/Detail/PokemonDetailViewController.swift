@@ -13,7 +13,7 @@ class PokemonDetailViewController: UIViewController {
     @Injected var pokedex: Pokedex
 
     // MARK: Properties
-    var pokedexPageItem: PokedexPageItem? {
+    var pokemonListItem: PokemonListItem? {
         didSet {
             initialize()
         }
@@ -36,7 +36,7 @@ class PokemonDetailViewController: UIViewController {
 
     // MARK: Methods
     private func initialize() {
-        guard let pokedexPageItem = pokedexPageItem else {
+        guard let pokedexPageItem = pokemonListItem else {
             return
         }
 
@@ -52,7 +52,7 @@ class PokemonDetailViewController: UIViewController {
     }
 
     private func prepareView() {
-        guard let pokedexPageItem = pokedexPageItem else {
+        guard let pokedexPageItem = pokemonListItem else {
             return
         }
 

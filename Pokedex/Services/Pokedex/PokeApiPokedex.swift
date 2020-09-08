@@ -17,7 +17,7 @@ enum PokeApiPokedexError: Error {
 class PokeApiPokedex: Pokedex {
     @Injected var apiClient: ApiClient
 
-    private var pokemon: [Int:Pokemon] = [:]
+    private var pokemon: [Int: Pokemon] = [:]
 
     private let limit = 50
 
@@ -28,11 +28,11 @@ class PokeApiPokedex: Pokedex {
             }
         }
         
-//        if pokemon.count >= number {
-//            return DispatchQueue.main.async {
-//                completionHandler(self.pokemon[number - 1], nil)
-//            }
-//        }
+        if let pokemon = pokemon[number] {
+            return DispatchQueue.main.async {
+                completionHandler(pokemon, nil)
+            }
+        }
 
         return apiClient.requestResouce("pokemon/\(number)",
                                              withParams: nil,
@@ -48,11 +48,13 @@ class PokeApiPokedex: Pokedex {
                 }
             }
 
+            let pokemon = Pokemon(number: pokeApiPokemon.number,
+                                  name: pokeApiPokemon.name,
+                                  type: .grass,
+                                  image: pokeApiPokemon.sprites.frontDefault)
+            self.pokemon[pokeApiPokemon.number] = pokemon
             DispatchQueue.main.async {
-                completionHandler(Pokemon(number: pokeApiPokemon.number,
-                                          name: pokeApiPokemon.name,
-                                          type: .grass,
-                                          image: pokeApiPokemon.sprites.frontDefault), nil)
+                completionHandler(pokemon, nil)
             }
         })
     }

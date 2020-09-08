@@ -47,7 +47,7 @@ extension PokemonSplitViewController: UISplitViewControllerDelegate {
             return false
         }
 
-        return pokemonDetailViewController.pokedexPageItem == nil
+        return pokemonDetailViewController.pokemonListItem == nil
     }
 
     func splitViewController(_ svc: UISplitViewController,

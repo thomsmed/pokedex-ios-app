@@ -25,6 +25,7 @@ class PokeApiPokedex: Pokedex {
     @Injected var apiClient: ApiClient
 
     private var pokemon: [Int: Pokemon] = [:]
+    private var pokedexPages: [Int: PokedexPage] = [:]
 
     private let limit = 50
 
@@ -77,6 +78,13 @@ class PokeApiPokedex: Pokedex {
             }
             return EmptyPokedexFetchTask()
         }
+        
+        if let pokedexPage = pokedexPages[pageNumber] {
+            DispatchQueue.main.async {
+                completionHandler(Result.success(pokedexPage))
+            }
+            return EmptyPokedexFetchTask()
+        }
 
         return apiClient.requestResouce("pokemon",
                                         withParams: ["offset": "\((pageNumber - 1) * limit)", "limit": "\(limit)"],
@@ -100,11 +108,13 @@ class PokeApiPokedex: Pokedex {
                 pokedexPageItems.append(PokedexPageItem(number: pokemonNumber, name: result.name))
             }
 
+            let pokedexPage = PokedexPage(number: pageNumber,
+                                          totalPagesCount: totalPages,
+                                          totalItemsCount: page.count,
+                                          items: pokedexPageItems)
+            self.pokedexPages[pageNumber] = pokedexPage
             DispatchQueue.main.async {
-                completionHandler(Result.success(PokedexPage(number: pageNumber,
-                                              totalPagesCount: totalPages,
-                                              totalItemsCount: page.count,
-                                              items: pokedexPageItems)))
+                completionHandler(Result.success(pokedexPage))
             }
         })
     }

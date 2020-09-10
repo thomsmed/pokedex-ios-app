@@ -21,6 +21,9 @@ class PokemonListViewController: UITableViewController {
     @Injected var pokedex: Pokedex
 
     var fetchPokedexPageTask: PokedexFetchTask?
+    var fetchPokemonTasks: [PokedexFetchTask] = []
+    
+    let maxFetchTasks = 20
 
     let maxCachedItemsCount = 100
     var items: [PokemonListItem] = []
@@ -63,7 +66,8 @@ class PokemonListViewController: UITableViewController {
             return
         }
 
-        let selectedPokemon = items[indexPath.row]
+        let index = indexPath.row - firstItemIndex
+        let selectedPokemon = items[index]
         pokemonDetailViewController.pokemonListItem = selectedPokemon
     }
 
@@ -107,12 +111,8 @@ class PokemonListViewController: UITableViewController {
 
         fetchPokedexPageTask = pokedex.fetchPage(page, completionHandler: { (result: Result<PokedexPage, Error>) in
             switch result {
-            case .failure:
-                let alert = UIAlertController(title: "🤔",
-                                              message: "Failed to fetch Pokedex page",
-                                              preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Ok", style: .default))
-                self.present(alert, animated: true)
+            case .failure(let error):
+                print(error)
             case .success(let pokedexPage):
                 let newItems = pokedexPage.items.map({ item in
                     PokemonListItem(number: item.number, name: item.name)
@@ -165,7 +165,7 @@ extension PokemonListViewController {
     }
 
     override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-
+        
     }
 
     override func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
@@ -197,30 +197,47 @@ extension PokemonListViewController {
             cell.imageView?.image = UIImage()
         } else {
             let index = indexPath.row - firstItemIndex
-            var pokedexPageItem = items[index]
-            cell.textLabel?.text = "(\(indexPath.row)) \(pokedexPageItem.name)"
-            cell.detailTextLabel?.text = "Nr.: \(pokedexPageItem.number)"
+            var pokemonListItem = items[index]
+            cell.textLabel?.text = "(\(indexPath.row)) \(pokemonListItem.name)"
+            cell.detailTextLabel?.text = "Nr.: \(pokemonListItem.number)"
             cell.imageView?.image = UIImage()
 
-//            if !pokedexPageItem.isFullyLoaded {
-//                pokedexPageItem.isFullyLoaded = true
-//                items[indexPath.row] = pokedexPageItem
-//                pokedex.pokemon(number: pokedexPageItem.number, completionHandler: {(pokemon: Pokemon?, error: Error?) in
-//                    var pokedexPageItem = self.items[indexPath.row]
-//
-//                    if let pokemon = pokemon {
-//                        pokedexPageItem.name += " (Nr: \(pokemon.number))"
-//                        pokedexPageItem.image = pokemon.image
-//
-//                        self.items[indexPath.row] = pokedexPageItem
-//                        self.tableView.reloadRows(at: [IndexPath(row: pokemon.number - 1, section: 0)], with: .fade)
-//                    } else {
-//                        pokedexPageItem.isFullyLoaded = false
-//                        self.items[indexPath.row] = pokedexPageItem
-//                    }
-//
-//                })
-//            }
+            if !pokemonListItem.isFullyLoaded {
+                let pokemonNumber = pokemonListItem.number
+                pokemonListItem.isFullyLoaded = true
+                items[index] = pokemonListItem
+                DispatchQueue.main.async {
+                    // TODO: Throttle spawning of dataTasks
+                    let fetchTask = self.pokedex.fetchPokemon(pokemonNumber,
+                                                         completionHandler: { (result: Result<Pokemon, Error>) in
+                        guard index < self.items.count else { return }
+
+                        var pokemonListItem = self.items[index]
+
+                        guard pokemonListItem.number == pokemonNumber else { return }
+
+                        switch result {
+                        case .failure:
+                            pokemonListItem.isFullyLoaded = false
+                            self.items[index] = pokemonListItem
+                        case .success(let pokemon):
+                            pokemonListItem.name = "\(pokemon.name) ***"
+                            pokemonListItem.type = pokemon.type
+
+                            self.items[index] = pokemonListItem
+
+                            UIView.performWithoutAnimation {
+                                self.tableView.reloadRows(at: [indexPath], with: .none)
+                            }
+                        }
+                     })
+                    self.fetchPokemonTasks.append(fetchTask)
+                    if self.fetchPokemonTasks.count > self.maxFetchTasks {
+                        self.fetchPokemonTasks.removeFirst().cancel()
+                    }
+                }
+            }
+
         }
 
         return cell

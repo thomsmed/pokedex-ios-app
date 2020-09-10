@@ -20,7 +20,7 @@ struct PokemonListItem {
 class PokemonListViewController: UITableViewController {
     @Injected var pokedex: Pokedex
 
-    var fetchPokedexPageTask: URLSessionDataTask?
+    var fetchPokedexPageTask: PokedexFetchTask?
 
     let maxCachedItemsCount = 100
     var items: [PokemonListItem] = []
@@ -28,7 +28,7 @@ class PokemonListViewController: UITableViewController {
     var lastItemIndex = 0
     var itemsPerPageCount = 0
     var totalItemsCount = 0
-    var fetchInProgress = false
+    var fetchingPage: Int?
 
     // MARK: Overrides
     override func viewDidLoad() {
@@ -70,7 +70,13 @@ class PokemonListViewController: UITableViewController {
     // MARK: - Refresh Control
     @objc
     private func fetchInitialPokemon() {
-        pokedex.page(number: 1, completionHandler: { (pokedexPage: PokedexPage?, _: Error?) -> Void in
+        if fetchingPage == 1 {
+            return
+        }
+        fetchPokedexPageTask?.cancel()
+        fetchingPage = 1
+
+        fetchPokedexPageTask = pokedex.fetchPage(1, completionHandler: { (pokedexPage: PokedexPage?, _: Error?) -> Void in
             self.itemsPerPageCount = pokedexPage?.items.count ?? 0
             self.totalItemsCount = pokedexPage?.totalItemsCount ?? 0
 
@@ -81,23 +87,24 @@ class PokemonListViewController: UITableViewController {
             }
             self.refreshControl?.endRefreshing()
 
-            self.fetchInProgress = false
+            self.fetchingPage = nil
         })
     }
 
-    private func fetchPokedexPage(number: Int) {
-        if fetchInProgress {
+    private func fetchPokedexPage(_ page: Int) {
+        if fetchingPage == page {
             return
         }
-        fetchInProgress = true
+        fetchPokedexPageTask?.cancel()
+        fetchingPage = page
 
-        pokedex.page(number: number, completionHandler: { (pokedexPage: PokedexPage?, error: Error?) in
+        fetchPokedexPageTask = pokedex.fetchPage(page, completionHandler: { (pokedexPage: PokedexPage?, error: Error?) in
             guard let pokedexPage = pokedexPage else { return }
 
             let newItems = pokedexPage.items.map({ item in
                 PokemonListItem(number: item.number, name: item.name)
             })
-            
+
             let firstPageItemIndex = (pokedexPage.number - 1) * self.itemsPerPageCount
             let lastPageItemIndex = firstPageItemIndex + pokedexPage.items.count - 1
             if firstPageItemIndex > self.lastItemIndex {
@@ -132,7 +139,7 @@ class PokemonListViewController: UITableViewController {
                 }
             }
 
-            self.fetchInProgress = false
+            self.fetchingPage = nil
         })
     }
 }
@@ -210,21 +217,11 @@ extension PokemonListViewController {
 extension PokemonListViewController: UITableViewDataSourcePrefetching {
     func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
         guard let lastIndexPath = indexPaths.last else { return }
-        
-        let indexToLoadFrom = lastIndexPath.row
 
-        if indexToLoadFrom > lastItemIndex {
-            let pageNumber = (lastItemIndex + 1) / itemsPerPageCount + 1
-            fetchPokedexPage(number: pageNumber)
-        } else if indexToLoadFrom < firstItemIndex {
-            let pageNumber = firstItemIndex / itemsPerPageCount
-            fetchPokedexPage(number: pageNumber)
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, cancelPrefetchingForRowsAt indexPaths: [IndexPath]) {
-        if let ongoingFetchTask = fetchPokedexPageTask {
-            ongoingFetchTask.cancel()
+        let indexToLoad = lastIndexPath.row
+        if indexToLoad > lastItemIndex || indexToLoad < firstItemIndex {
+            let pageToLoad = (indexToLoad + 1) / itemsPerPageCount + 1
+            fetchPokedexPage(pageToLoad)
         }
     }
 }

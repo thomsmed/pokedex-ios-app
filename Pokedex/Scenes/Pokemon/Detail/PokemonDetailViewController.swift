@@ -45,8 +45,10 @@ class PokemonDetailViewController: UIViewController {
             navigationItem.leftItemsSupplementBackButton = true
         }
 
-        pokedex.pokemon(number: pokedexPageItem.number,
+        _ = pokedex.fetchPokemon(pokedexPageItem.number,
                         completionHandler: { (pokemon: Pokemon?, _: Error?) -> Void in
+            guard let pokemon = pokemon else { return }
+
             self.pokemon = pokemon
         })
     }

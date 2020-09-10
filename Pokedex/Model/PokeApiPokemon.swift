@@ -15,7 +15,7 @@ struct PokeApiPokemon: Decodable {
     let height: Int
     let weight: Int
     let sprites: PokeApiPokemonSprites
-    
+
     enum CodingKeys: String, CodingKey {
         case number = "id"
         case name

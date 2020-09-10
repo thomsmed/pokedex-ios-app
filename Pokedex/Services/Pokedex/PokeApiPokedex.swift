@@ -9,6 +9,13 @@
 import Foundation
 import Resolver
 
+extension URLSessionTask: PokedexFetchTask { }
+struct EmptyPokedexFetchTask: PokedexFetchTask {
+    func cancel() {
+        // Do nothng lol
+    }
+}
+
 enum PokeApiPokedexError: Error {
     case noPage
     case noPokemon
@@ -21,20 +28,22 @@ class PokeApiPokedex: Pokedex {
 
     private let limit = 50
 
-    func pokemon(number: Int, completionHandler: @escaping (Pokemon?, Error?) -> Void) {
-        if number < 0 {
-            return DispatchQueue.main.async {
+    func fetchPokemon(_ pokemonNumber: Int, completionHandler: @escaping (Pokemon?, Error?) -> Void) -> PokedexFetchTask {
+        if pokemonNumber < 0 {
+            DispatchQueue.main.async {
                 completionHandler(nil, PokeApiPokedexError.noPokemon)
             }
-        }
-        
-        if let pokemon = pokemon[number] {
-            return DispatchQueue.main.async {
-                completionHandler(pokemon, nil)
-            }
+            return EmptyPokedexFetchTask()
         }
 
-        _ = apiClient.requestResouce("pokemon/\(number)",
+        if let pokemon = pokemon[pokemonNumber] {
+            DispatchQueue.main.async {
+                completionHandler(pokemon, nil)
+            }
+            return EmptyPokedexFetchTask()
+        }
+
+        return apiClient.requestResouce("pokemon/\(pokemonNumber)",
                                              withParams: nil,
                                              completionHandler: { (pokeApiPokemon: PokeApiPokemon?, error: Error?) in
             if let error = error {
@@ -59,15 +68,16 @@ class PokeApiPokedex: Pokedex {
         })
     }
 
-    func page(number: Int, completionHandler: @escaping (PokedexPage?, Error?) -> Void) {
-        if number < 1 {
+    func fetchPage(_ pageNumber: Int, completionHandler: @escaping (PokedexPage?, Error?) -> Void) -> PokedexFetchTask {
+        if pageNumber < 1 {
             DispatchQueue.main.async {
-                return completionHandler(nil, PokeApiPokedexError.noPage)
+                completionHandler(nil, PokeApiPokedexError.noPage)
             }
+            return EmptyPokedexFetchTask()
         }
 
-        _ = apiClient.requestResouce("pokemon",
-                                        withParams: ["offset": "\((number - 1) * limit)", "limit": "\(limit)"],
+        return apiClient.requestResouce("pokemon",
+                                        withParams: ["offset": "\((pageNumber - 1) * limit)", "limit": "\(limit)"],
                                         completionHandler: { (page: PokeApiPokemonPage?, error: Error?) in
             if let error = error {
                 return DispatchQueue.main.async {
@@ -84,12 +94,12 @@ class PokeApiPokedex: Pokedex {
             var pokedexPageItems: [PokedexPageItem] = []
             let totalPages = page.count / self.limit + (page.count % self.limit > 0 ? 1 : 0)
             for (index, result) in page.results.enumerated() {
-                let pokemonNumber = self.limit * number - self.limit + index + 1
+                let pokemonNumber = self.limit * pageNumber - self.limit + index + 1
                 pokedexPageItems.append(PokedexPageItem(number: pokemonNumber, name: result.name))
             }
 
             DispatchQueue.main.async {
-                completionHandler(PokedexPage(number: number,
+                completionHandler(PokedexPage(number: pageNumber,
                                               totalPagesCount: totalPages,
                                               totalItemsCount: page.count,
                                               items: pokedexPageItems), nil)

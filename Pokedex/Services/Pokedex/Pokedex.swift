@@ -8,7 +8,11 @@
 
 import Foundation
 
+protocol PokedexFetchTask {
+    func cancel()
+}
+
 protocol Pokedex {
-    func pokemon(number: Int, completionHandler: @escaping (_ pokemon: Pokemon?, _ error: Error?) -> Void)
-    func page(number: Int, completionHandler: @escaping (_ pokedexPage: PokedexPage?, _ error: Error?) -> Void)
+    func fetchPokemon(_ pokemonNumber: Int, completionHandler: @escaping (_ pokemon: Pokemon?, _ error: Error?) -> Void) -> PokedexFetchTask
+    func fetchPage(_ pageNumber: Int, completionHandler: @escaping (_ pokedexPage: PokedexPage?, _ error: Error?) -> Void) -> PokedexFetchTask
 }

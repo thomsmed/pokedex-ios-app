@@ -34,7 +34,7 @@ class PokeApiPokedex: Pokedex {
             }
         }
 
-        return apiClient.requestResouce("pokemon/\(number)",
+        _ = apiClient.requestResouce("pokemon/\(number)",
                                              withParams: nil,
                                              completionHandler: { (pokeApiPokemon: PokeApiPokemon?, error: Error?) in
             if let error = error {
@@ -66,7 +66,7 @@ class PokeApiPokedex: Pokedex {
             }
         }
 
-        return apiClient.requestResouce("pokemon",
+        _ = apiClient.requestResouce("pokemon",
                                         withParams: ["offset": "\((number - 1) * limit)", "limit": "\(limit)"],
                                         completionHandler: { (page: PokeApiPokemonPage?, error: Error?) in
             if let error = error {

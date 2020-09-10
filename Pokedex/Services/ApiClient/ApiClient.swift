@@ -11,5 +11,6 @@ import Foundation
 protocol ApiClient {
     func requestResouce<T: Decodable>(_ resource: String,
                                       withParams params: [String: String]?,
-                                      completionHandler callback: @escaping (_ result: T?, _ error: Error?) -> Void)
+                                      completionHandler callback: @escaping (_ result: T?,
+                                                                             _ error: Error?) -> Void) -> URLSessionTask
 }

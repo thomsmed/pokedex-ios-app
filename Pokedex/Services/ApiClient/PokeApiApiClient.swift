@@ -19,7 +19,7 @@ class PokeApiApiClient: ApiClient {
     // TODO: RETURN RESULT WITH SUCCESS(T) AND FAILURE(ERROR)
     func requestResouce<T: Decodable>(_ resource: String,
                                       withParams params: [String: String]?,
-                                      completionHandler callback: @escaping (_ result: T?, _ error: Error?) -> Void) {
+                                      completionHandler callback: @escaping (_ result: T?, _ error: Error?) -> Void) -> URLSessionTask {
 
         var urlString = "\(PokeApiApiClient.baseUrl)\(resource)"
 
@@ -32,8 +32,10 @@ class PokeApiApiClient: ApiClient {
 
         let url = URL(string: urlString)!
 
-        URLSession.shared.dataTask(with: url,
-                                   completionHandler: { (data: Data?, response: URLResponse?, error: Error?) in
+        let task = URLSession.shared.dataTask(with: url,
+                                   completionHandler: { (data: Data?,
+                                                         response: URLResponse?,
+                                                         error: Error?) in
 
             if let error = error {
                 return callback(nil, error)
@@ -57,6 +59,10 @@ class PokeApiApiClient: ApiClient {
                 callback(nil, error)
             }
 
-        }).resume()
+        })
+        
+        task.resume()
+        
+        return task
     }
 }

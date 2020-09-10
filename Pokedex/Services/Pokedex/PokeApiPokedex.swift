@@ -28,17 +28,18 @@ class PokeApiPokedex: Pokedex {
 
     private let limit = 50
 
-    func fetchPokemon(_ pokemonNumber: Int, completionHandler: @escaping (Pokemon?, Error?) -> Void) -> PokedexFetchTask {
+    func fetchPokemon(_ pokemonNumber: Int,
+                      completionHandler: @escaping (Result<Pokemon, Error>) -> Void) -> PokedexFetchTask {
         if pokemonNumber < 0 {
             DispatchQueue.main.async {
-                completionHandler(nil, PokeApiPokedexError.noPokemon)
+                completionHandler(Result.failure(PokeApiPokedexError.noPokemon))
             }
             return EmptyPokedexFetchTask()
         }
 
         if let pokemon = pokemon[pokemonNumber] {
             DispatchQueue.main.async {
-                completionHandler(pokemon, nil)
+                completionHandler(Result.success(pokemon))
             }
             return EmptyPokedexFetchTask()
         }
@@ -48,12 +49,12 @@ class PokeApiPokedex: Pokedex {
                                              completionHandler: { (pokeApiPokemon: PokeApiPokemon?, error: Error?) in
             if let error = error {
                 return DispatchQueue.main.async {
-                    completionHandler(nil, error)
+                    completionHandler(Result.failure(error))
                 }
             }
             guard let pokeApiPokemon = pokeApiPokemon else {
                 return DispatchQueue.main.async {
-                    completionHandler(nil, PokeApiPokedexError.noPokemon)
+                    completionHandler(Result.failure(PokeApiPokedexError.noPokemon))
                 }
             }
 
@@ -63,15 +64,16 @@ class PokeApiPokedex: Pokedex {
                                   image: pokeApiPokemon.sprites.frontDefault)
             self.pokemon[pokeApiPokemon.number] = pokemon
             DispatchQueue.main.async {
-                completionHandler(pokemon, nil)
+                completionHandler(Result.success(pokemon))
             }
         })
     }
 
-    func fetchPage(_ pageNumber: Int, completionHandler: @escaping (PokedexPage?, Error?) -> Void) -> PokedexFetchTask {
+    func fetchPage(_ pageNumber: Int,
+                   completionHandler: @escaping (Result<PokedexPage, Error>) -> Void) -> PokedexFetchTask {
         if pageNumber < 1 {
             DispatchQueue.main.async {
-                completionHandler(nil, PokeApiPokedexError.noPage)
+                completionHandler(Result.failure(PokeApiPokedexError.noPage))
             }
             return EmptyPokedexFetchTask()
         }
@@ -81,13 +83,13 @@ class PokeApiPokedex: Pokedex {
                                         completionHandler: { (page: PokeApiPokemonPage?, error: Error?) in
             if let error = error {
                 return DispatchQueue.main.async {
-                    completionHandler(nil, error)
+                    completionHandler(Result.failure(error))
                 }
             }
 
             guard let page = page else {
                 return DispatchQueue.main.async {
-                    completionHandler(nil, PokeApiPokedexError.noPage)
+                    completionHandler(Result.failure(PokeApiPokedexError.noPage))
                 }
             }
 
@@ -99,10 +101,10 @@ class PokeApiPokedex: Pokedex {
             }
 
             DispatchQueue.main.async {
-                completionHandler(PokedexPage(number: pageNumber,
+                completionHandler(Result.success(PokedexPage(number: pageNumber,
                                               totalPagesCount: totalPages,
                                               totalItemsCount: page.count,
-                                              items: pokedexPageItems), nil)
+                                              items: pokedexPageItems)))
             }
         })
     }

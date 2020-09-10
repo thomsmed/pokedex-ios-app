@@ -13,6 +13,8 @@ protocol PokedexFetchTask {
 }
 
 protocol Pokedex {
-    func fetchPokemon(_ pokemonNumber: Int, completionHandler: @escaping (_ pokemon: Pokemon?, _ error: Error?) -> Void) -> PokedexFetchTask
-    func fetchPage(_ pageNumber: Int, completionHandler: @escaping (_ pokedexPage: PokedexPage?, _ error: Error?) -> Void) -> PokedexFetchTask
+    func fetchPokemon(_ pokemonNumber: Int,
+                      completionHandler: @escaping (Result<Pokemon, Error>) -> Void) -> PokedexFetchTask
+    func fetchPage(_ pageNumber: Int,
+                   completionHandler: @escaping (Result<PokedexPage, Error>) -> Void) -> PokedexFetchTask
 }

@@ -76,15 +76,22 @@ class PokemonListViewController: UITableViewController {
         fetchPokedexPageTask?.cancel()
         fetchingPage = 1
 
-        fetchPokedexPageTask = pokedex.fetchPage(1, completionHandler: { (pokedexPage: PokedexPage?, _: Error?) -> Void in
-            self.itemsPerPageCount = pokedexPage?.items.count ?? 0
-            self.totalItemsCount = pokedexPage?.totalItemsCount ?? 0
-
-            if let pokedexPage = pokedexPage {
+        fetchPokedexPageTask = pokedex.fetchPage(1, completionHandler: { (result: Result<PokedexPage, Error>) -> Void in
+            switch result {
+            case .failure:
+                let alert = UIAlertController(title: "🤔",
+                                              message: "Failed to fetch Pokedex page",
+                                              preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Ok", style: .default))
+                self.present(alert, animated: true)
+            case .success(let pokedexPage):
+                self.itemsPerPageCount = pokedexPage.items.count
+                self.totalItemsCount = pokedexPage.totalItemsCount
                 self.items = pokedexPage.items.map({ item in PokemonListItem(number: item.number, name: item.name)})
                 self.lastItemIndex = self.items.count - 1
                 self.tableView.reloadData()
             }
+            
             self.refreshControl?.endRefreshing()
 
             self.fetchingPage = nil
@@ -98,44 +105,51 @@ class PokemonListViewController: UITableViewController {
         fetchPokedexPageTask?.cancel()
         fetchingPage = page
 
-        fetchPokedexPageTask = pokedex.fetchPage(page, completionHandler: { (pokedexPage: PokedexPage?, error: Error?) in
-            guard let pokedexPage = pokedexPage else { return }
+        fetchPokedexPageTask = pokedex.fetchPage(page, completionHandler: { (result: Result<PokedexPage, Error>) in
+            switch result {
+            case .failure:
+                let alert = UIAlertController(title: "🤔",
+                                              message: "Failed to fetch Pokedex page",
+                                              preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Ok", style: .default))
+                self.present(alert, animated: true)
+            case .success(let pokedexPage):
+                let newItems = pokedexPage.items.map({ item in
+                    PokemonListItem(number: item.number, name: item.name)
+                })
 
-            let newItems = pokedexPage.items.map({ item in
-                PokemonListItem(number: item.number, name: item.name)
-            })
-
-            let firstPageItemIndex = (pokedexPage.number - 1) * self.itemsPerPageCount
-            let lastPageItemIndex = firstPageItemIndex + pokedexPage.items.count - 1
-            if firstPageItemIndex > self.lastItemIndex {
-                if firstPageItemIndex - self.lastItemIndex > 1 {
-                    self.items = newItems
-                } else if self.items.count >= self.maxCachedItemsCount {
-                    self.items.append(contentsOf: newItems)
-                    self.items.removeFirst(pokedexPage.items.count)
+                let firstPageItemIndex = (pokedexPage.number - 1) * self.itemsPerPageCount
+                let lastPageItemIndex = firstPageItemIndex + pokedexPage.items.count - 1
+                if firstPageItemIndex > self.lastItemIndex {
+                    if firstPageItemIndex - self.lastItemIndex > 1 {
+                        self.items = newItems
+                    } else if self.items.count >= self.maxCachedItemsCount {
+                        self.items.append(contentsOf: newItems)
+                        self.items.removeFirst(pokedexPage.items.count)
+                    } else {
+                        self.items.append(contentsOf: newItems)
+                    }
+                    self.lastItemIndex = lastPageItemIndex
+                    self.firstItemIndex = lastPageItemIndex - self.items.count + 1
                 } else {
-                    self.items.append(contentsOf: newItems)
+                    if self.firstItemIndex - lastPageItemIndex > 1 {
+                        self.items = newItems
+                    } else if self.items.count >= self.maxCachedItemsCount {
+                        self.items.insert(contentsOf: newItems, at: 0)
+                        self.items.removeLast(pokedexPage.items.count)
+                    } else {
+                        self.items.insert(contentsOf: newItems, at: 0)
+                    }
+                    self.firstItemIndex = firstPageItemIndex
+                    self.lastItemIndex = firstPageItemIndex + self.items.count - 1
                 }
-                self.lastItemIndex = lastPageItemIndex
-                self.firstItemIndex = lastPageItemIndex - self.items.count + 1
-            } else {
-                if self.firstItemIndex - lastPageItemIndex > 1 {
-                    self.items = newItems
-                } else if self.items.count >= self.maxCachedItemsCount {
-                    self.items.insert(contentsOf: newItems, at: 0)
-                    self.items.removeLast(pokedexPage.items.count)
-                } else {
-                    self.items.insert(contentsOf: newItems, at: 0)
-                }
-                self.firstItemIndex = firstPageItemIndex
-                self.lastItemIndex = firstPageItemIndex + self.items.count - 1
-            }
 
-            let indexPathsForVisibleRows = self.tableView.indexPathsForVisibleRows ?? []
-            if let firstIndexPath = indexPathsForVisibleRows.first,
-                let lastIndexPath = indexPathsForVisibleRows.last {
-                if firstIndexPath.row > firstPageItemIndex || lastIndexPath.row < lastPageItemIndex {
-                    self.tableView.reloadData()
+                let indexPathsForVisibleRows = self.tableView.indexPathsForVisibleRows ?? []
+                if let firstIndexPath = indexPathsForVisibleRows.first,
+                   let lastIndexPath = indexPathsForVisibleRows.last {
+                    if firstIndexPath.row > firstPageItemIndex || lastIndexPath.row < lastPageItemIndex {
+                        self.tableView.reloadData()
+                    }
                 }
             }
 

@@ -8,18 +8,18 @@
 
 import Foundation
 
-enum PokeApiApiClientError: Error {
+enum ApiClientError: Error {
     case noResponse
-    case wrongMimeType
+    case noData
 }
 
 class PokeApiApiClient: ApiClient {
     static let baseUrl: String = "https://pokeapi.co/api/v2/"
 
-    // TODO: RETURN RESULT WITH SUCCESS(T) AND FAILURE(ERROR)
     func requestResouce<T: Decodable>(_ resource: String,
                                       withParams params: [String: String]?,
-                                      completionHandler callback: @escaping (_ result: T?, _ error: Error?) -> Void) -> URLSessionTask {
+                                      completionHandler callback:
+                                        @escaping (Result<T, Error>) -> Void) -> URLSessionTask {
 
         var urlString = "\(PokeApiApiClient.baseUrl)\(resource)"
 
@@ -33,36 +33,33 @@ class PokeApiApiClient: ApiClient {
         let url = URL(string: urlString)!
 
         let task = URLSession.shared.dataTask(with: url,
-                                   completionHandler: { (data: Data?,
-                                                         response: URLResponse?,
-                                                         error: Error?) in
+                                   completionHandler: { (data: Data?, response: URLResponse?, error: Error?) in
 
             if let error = error {
-                return callback(nil, error)
+                return callback(Result.failure(error))
             }
 
             guard let httpResponse = response as? HTTPURLResponse else {
-                return callback(nil, PokeApiApiClientError.noResponse)
+                return callback(Result.failure(ApiClientError.noResponse))
             }
 
             guard let mimeType = httpResponse.mimeType,
                   mimeType == "application/json",
                   let data = data else {
-                return callback(nil, PokeApiApiClientError.wrongMimeType)
+                return callback(Result.failure(ApiClientError.noData))
             }
 
             let decoder = JSONDecoder()
             do {
                 let result = try decoder.decode(T.self, from: data)
-                callback(result, nil)
+                callback(Result.success(result))
             } catch {
-                callback(nil, error)
+                callback(Result.failure(error))
             }
-
         })
-        
+
         task.resume()
-        
+
         return task
     }
 }

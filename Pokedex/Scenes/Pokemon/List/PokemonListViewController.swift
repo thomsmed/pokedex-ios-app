@@ -145,9 +145,9 @@ class PokemonListViewController: UITableViewController {
                 }
 
                 let indexPathsForVisibleRows = self.tableView.indexPathsForVisibleRows ?? []
-                if let firstIndexPath = indexPathsForVisibleRows.first,
-                   let lastIndexPath = indexPathsForVisibleRows.last {
-                    if firstIndexPath.row > firstPageItemIndex || lastIndexPath.row < lastPageItemIndex {
+                if let firstVisibleIndexPath = indexPathsForVisibleRows.first,
+                   let lastVisibleIndexPath = indexPathsForVisibleRows.last {
+                    if firstVisibleIndexPath.row < lastPageItemIndex && lastVisibleIndexPath.row > firstPageItemIndex {
                         self.tableView.reloadData()
                     }
                 }
@@ -202,12 +202,12 @@ extension PokemonListViewController {
             cell.detailTextLabel?.text = "Nr.: \(pokemonListItem.number)"
             cell.imageView?.image = UIImage()
 
-            if !pokemonListItem.isFullyLoaded {
+            if false {
+//            if !pokemonListItem.isFullyLoaded {
                 let pokemonNumber = pokemonListItem.number
                 pokemonListItem.isFullyLoaded = true
                 items[index] = pokemonListItem
                 DispatchQueue.main.async {
-                    // TODO: Throttle spawning of dataTasks
                     let fetchTask = self.pokedex.fetchPokemon(pokemonNumber,
                                                          completionHandler: { (result: Result<Pokemon, Error>) in
                         guard index < self.items.count else { return }
@@ -227,7 +227,9 @@ extension PokemonListViewController {
                             self.items[index] = pokemonListItem
 
                             UIView.performWithoutAnimation {
+                                let cof = self.tableView.contentOffset
                                 self.tableView.reloadRows(at: [indexPath], with: .none)
+                                self.tableView.contentOffset = cof
                             }
                         }
                      })
@@ -251,7 +253,7 @@ extension PokemonListViewController: UITableViewDataSourcePrefetching {
 
         let indexToLoad = lastIndexPath.row
         if indexToLoad > lastItemIndex || indexToLoad < firstItemIndex {
-            let pageToLoad = (indexToLoad + 1) / itemsPerPageCount + 1
+            let pageToLoad = indexToLoad / itemsPerPageCount + 1
             fetchPokedexPage(pageToLoad)
         }
     }

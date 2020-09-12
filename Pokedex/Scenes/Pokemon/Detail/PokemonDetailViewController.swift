@@ -45,15 +45,11 @@ class PokemonDetailViewController: UIViewController {
             navigationItem.leftItemsSupplementBackButton = true
         }
 
-        _ = pokedex.fetchPokemon(pokedexPageItem.number,
+        _ = pokedex.fetchPokemon(pokedexPageItem.name,
                                  completionHandler: { (result: Result<Pokemon, Error>) -> Void in
             switch result {
-            case .failure:
-                let alert = UIAlertController(title: "🤔",
-                                              message: "Failed to fetch Pokemon",
-                                              preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Ok", style: .default))
-                self.present(alert, animated: true)
+            case .failure(let error):
+                print(error)
             case .success(let pokemon):
                 self.pokemon = pokemon
             }

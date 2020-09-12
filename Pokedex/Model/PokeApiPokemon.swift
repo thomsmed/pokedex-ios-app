@@ -27,10 +27,10 @@ struct PokeApiPokemon: Decodable {
 }
 
 struct PokeApiPokemonSprites: Decodable {
-    let frontDefault: String
-    let frontShiny: String
-    let backDefault: String
-    let backShiny: String
+    let frontDefault: String?
+    let frontShiny: String?
+    let backDefault: String?
+    let backShiny: String?
 
     enum CodingKeys: String, CodingKey {
         case frontDefault = "front_default"

@@ -24,6 +24,7 @@ enum PokedexError: Error {
 class PokeApiPokedex: Pokedex {
     @Injected var apiClient: ApiClient
 
+    private var pokemonNumbers: [String: Int] = [:]
     private var pokemon: [Int: Pokemon] = [:]
     private var pokedexPages: [Int: PokedexPage] = [:]
 
@@ -59,6 +60,45 @@ class PokeApiPokedex: Pokedex {
                                       type: .grass,
                                       image: pokeApiPokemon.sprites.frontDefault)
                 self.pokemon[pokeApiPokemon.number] = pokemon
+                self.pokemonNumbers[pokeApiPokemon.name] = pokemon.number
+                DispatchQueue.main.async {
+                    completionHandler(Result.success(pokemon))
+                }
+            }
+        })
+    }
+
+    func fetchPokemon(_ pokemonName: String,
+                      completionHandler: @escaping (Result<Pokemon, Error>) -> Void) -> PokedexFetchTask {
+        if pokemonName.isEmpty {
+            DispatchQueue.main.async {
+                completionHandler(Result.failure(PokedexError.noPokemon))
+            }
+            return EmptyPokedexFetchTask()
+        }
+
+        if let pokemonNumber = pokemonNumbers[pokemonName], let pokemon = pokemon[pokemonNumber] {
+            DispatchQueue.main.async {
+                completionHandler(Result.success(pokemon))
+            }
+            return EmptyPokedexFetchTask()
+        }
+
+        return apiClient.requestResouce("pokemon/\(pokemonName)",
+                                             withParams: nil,
+                                             completionHandler: { (result: Result<PokeApiPokemon, Error>) in
+            switch result {
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    completionHandler(Result.failure(error))
+                }
+            case .success(let pokeApiPokemon):
+                let pokemon = Pokemon(number: pokeApiPokemon.number,
+                                      name: pokeApiPokemon.name,
+                                      type: .grass,
+                                      image: pokeApiPokemon.sprites.frontDefault)
+                self.pokemon[pokeApiPokemon.number] = pokemon
+                self.pokemonNumbers[pokeApiPokemon.name] = pokemon.number
                 DispatchQueue.main.async {
                     completionHandler(Result.success(pokemon))
                 }

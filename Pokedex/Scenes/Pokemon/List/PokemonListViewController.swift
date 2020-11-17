@@ -13,7 +13,7 @@ struct PokemonListItem {
     let number: Int
     var name: String
     var type: PokemonType?
-    var image: String?
+    var imageData: Data?
     var isFullyLoaded: Bool = false
 }
 
@@ -22,6 +22,7 @@ class PokemonListViewController: UITableViewController {
 
     var fetchPokedexPageTask: PokedexFetchTask?
     var fetchPokemonTasks: [PokedexFetchTask] = []
+    var fethPokemonImageDataTasks: [URLSessionDataTask] = []
 
     let maxFetchTasks = 20
 
@@ -209,13 +210,10 @@ extension PokemonListViewController {
             cell.detailTextLabel?.text = "Nr.: \(pokemonListItem.number)" + (
                 pokemonListItem.type != nil ? ", Type: \(pokemonListItem.type)" : ""
             )
-            if let image = pokemonListItem.image {
-                if let data = try? Data(contentsOf: URL(string: image)!) {
-                    cell.imageView?.image = UIImage(data: data)
-                }
+            if let imageData = pokemonListItem.imageData {
+                cell.imageView?.image = UIImage(data: imageData)
             }
 
-//            if false {
             if !pokemonListItem.isFullyLoaded {
                 pokemonListItem.isFullyLoaded = true
                 items[index] = pokemonListItem
@@ -242,10 +240,14 @@ extension PokemonListViewController {
                 guard index > -1 && index < self.items.count else { return }
 
                 var pokemonListItem = self.items[index]
-                pokemonListItem.image = pokemon.image
                 pokemonListItem.type = pokemon.type
 
                 self.items[index] = pokemonListItem
+                
+                if let imageUrl = pokemon.imageUrl,
+                   let url = URL(string: imageUrl) {
+                    self.fetchImageData(forPokemonNr: pokemon.number, fromURL: url)
+                }
 
                 UIView.performWithoutAnimation {
                     let cof = self.tableView.contentOffset
@@ -258,6 +260,38 @@ extension PokemonListViewController {
         self.fetchPokemonTasks.append(fetchTask)
         if self.fetchPokemonTasks.count > self.maxFetchTasks {
             self.fetchPokemonTasks.removeFirst().cancel()
+        }
+    }
+
+    private func fetchImageData(forPokemonNr number: Int, fromURL url: URL) {
+        let fetchTask = URLSession.shared.dataTask(with: url, completionHandler: { (data, _, error) in
+            if let _ = error { return }
+            guard let imageData = data else { return }
+
+            let itemIndex = number - 1
+            let index = itemIndex - self.firstItemIndex
+
+            guard index > -1 && index < self.items.count else { return }
+
+            var pokemonListItem = self.items[index]
+            pokemonListItem.imageData = imageData
+
+            self.items[index] = pokemonListItem
+
+            DispatchQueue.main.async { [weak self] in
+                UIView.performWithoutAnimation {
+                    let cof = self?.tableView.contentOffset
+                    self?.tableView.reloadRows(at: [IndexPath(row: itemIndex, section: 0)], with: .none)
+                    self?.tableView.contentOffset = cof!
+                }
+            }
+        })
+
+        self.fethPokemonImageDataTasks.append(fetchTask)
+        if self.fethPokemonImageDataTasks.count > self.maxFetchTasks {
+            self.fethPokemonImageDataTasks.removeFirst().cancel()
+        } else {
+            fetchTask.resume()
         }
     }
 }

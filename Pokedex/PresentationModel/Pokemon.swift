@@ -22,7 +22,7 @@ struct Pokemon {
     let number: Int
     let name: String
     let type: PokemonType
-    let image: String?
+    let imageUrl: String?
 }
 
 struct PokedexPage {

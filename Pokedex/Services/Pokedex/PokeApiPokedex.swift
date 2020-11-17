@@ -58,7 +58,7 @@ class PokeApiPokedex: Pokedex {
                 let pokemon = Pokemon(number: pokeApiPokemon.number,
                                       name: pokeApiPokemon.name,
                                       type: .grass,
-                                      image: pokeApiPokemon.sprites.frontDefault)
+                                      imageUrl: pokeApiPokemon.sprites.frontDefault)
                 self.pokemon[pokeApiPokemon.number] = pokemon
                 self.pokemonNumbers[pokeApiPokemon.name] = pokemon.number
                 DispatchQueue.main.async {
@@ -96,7 +96,7 @@ class PokeApiPokedex: Pokedex {
                 let pokemon = Pokemon(number: pokeApiPokemon.number,
                                       name: pokeApiPokemon.name,
                                       type: .grass,
-                                      image: pokeApiPokemon.sprites.frontDefault)
+                                      imageUrl: pokeApiPokemon.sprites.frontDefault)
                 self.pokemon[pokeApiPokemon.number] = pokemon
                 self.pokemonNumbers[pokeApiPokemon.name] = pokemon.number
                 DispatchQueue.main.async {

@@ -68,8 +68,13 @@ class PokemonListViewController: UITableViewController {
         }
 
         let index = indexPath.row - firstItemIndex
-        let selectedPokemon = items[index]
-        pokemonDetailViewController.pokemonListItem = selectedPokemon
+        
+        if index < items.count {
+            let selectedPokemon = items[index]
+            pokemonDetailViewController.pokemonListItem = selectedPokemon
+        } else {
+            pokemonDetailViewController.pokemonListItem = PokemonListItem(number: indexPath.row + 1, name: "")
+        }
     }
 
     // MARK: - Refresh Control
@@ -207,8 +212,7 @@ extension PokemonListViewController {
         } else {
             let index = indexPath.row - firstItemIndex
             var pokemonListItem = items[index]
-            var name = pokemonListItem.name
-            cell.textLabel?.text = name.removeFirst().uppercased() + name
+            cell.textLabel?.text = pokemonListItem.name
             cell.detailTextLabel?.text = "Nr.: \(pokemonListItem.number)" + (
                 pokemonListItem.type != nil ? ", Type: \(pokemonListItem.type)" : ""
             )

@@ -12,6 +12,9 @@ import Resolver
 class PokemonDetailViewController: UIViewController {
     @Injected var pokedex: Pokedex
 
+    private var fetchPokemonTask: PokedexFetchTask?
+    private var fetchImageTask: PokedexFetchTask?
+
     // MARK: Properties
     var pokemonListItem: PokemonListItem? {
         didSet {
@@ -34,9 +37,15 @@ class PokemonDetailViewController: UIViewController {
         prepareView()
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        fetchPokemonTask?.cancel()
+        fetchImageTask?.cancel()
+    }
+
     // MARK: Methods
     private func initialize() {
-        guard let pokedexPageItem = pokemonListItem else {
+        guard let pokemonListItem = pokemonListItem else {
             return
         }
 
@@ -44,24 +53,40 @@ class PokemonDetailViewController: UIViewController {
             navigationItem.leftBarButtonItem = pokemonSplitViewController.displayModeBarButtonItem
             navigationItem.leftItemsSupplementBackButton = true
         }
-
-        _ = pokedex.fetchPokemon(pokedexPageItem.name,
-                                 completionHandler: { (result: Result<Pokemon, Error>) -> Void in
-            switch result {
-            case .failure(let error):
-                print(error)
-            case .success(let pokemon):
-                self.pokemon = pokemon
-            }
-        })
+        
+        if pokemonListItem.name.isEmpty {
+            fetchPokemonTask = pokedex.fetchPokemon(pokemonListItem.number,
+                                                    completionHandler: { (result: Result<Pokemon, Error>) -> Void in
+                switch result {
+                case .failure(let error):
+                    print(error)
+                case .success(let pokemon):
+                    self.pokemon = pokemon
+                }
+            })
+        } else {
+            fetchPokemonTask = pokedex.fetchPokemon(pokemonListItem.name,
+                                                    completionHandler: { (result: Result<Pokemon, Error>) -> Void in
+                switch result {
+                case .failure(let error):
+                    print(error)
+                case .success(let pokemon):
+                    self.pokemon = pokemon
+                }
+            })
+        }
     }
 
     private func prepareView() {
-        guard let pokedexPageItem = pokemonListItem else {
+        guard let pokemonListItem = pokemonListItem else {
             return
         }
 
-        navigationItem.title = pokedexPageItem.name
+        navigationItem.title = pokemonListItem.name
+
+        if let imageData = pokemonListItem.imageData {
+            imageView.image = UIImage(data: imageData)
+        }
     }
 
     private func updateView() {
@@ -70,7 +95,20 @@ class PokemonDetailViewController: UIViewController {
         }
 
         navigationItem.title = pokemon.name
-//        imageView.image = pokemon.image
+
+        guard imageView.image == nil,
+              let imageUrl = pokemon.imageUrl else {
+            return
+        }
+
+        fetchImageTask = pokedex.fetchImage(imageUrl, completionHandler: { (result: Result<Data, Error>) in
+            switch result {
+            case .failure(let error):
+                print(error)
+            case .success(let imageData):
+                self.imageView.image = UIImage(data: imageData)
+            }
+        })
     }
 
 }

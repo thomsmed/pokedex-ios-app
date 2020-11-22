@@ -9,8 +9,12 @@
 import Foundation
 
 protocol ApiClient {
-    func requestResouce<T: Decodable>(_ resource: String,
+    func requestObject<T: Decodable>(atRelativePath relativePath: String,
                                       withParams params: [String: String]?,
                                       completionHandler callback:
                                         @escaping (Result<T, Error>) -> Void) -> URLSessionTask
+    func requestData(atAbsolutePath absolutePath: String,
+                                      withParams params: [String: String]?,
+                                      completionHandler callback:
+                                        @escaping (Result<Data, Error>) -> Void) -> URLSessionTask
 }

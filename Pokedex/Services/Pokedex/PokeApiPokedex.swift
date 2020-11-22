@@ -46,7 +46,7 @@ class PokeApiPokedex: Pokedex {
             return EmptyPokedexFetchTask()
         }
 
-        return apiClient.requestResouce("pokemon/\(pokemonNumber)",
+        return apiClient.requestObject(atRelativePath: "pokemon/\(pokemonNumber)",
                                              withParams: nil,
                                              completionHandler: { (result: Result<PokeApiPokemon, Error>) in
             switch result {
@@ -84,7 +84,7 @@ class PokeApiPokedex: Pokedex {
             return EmptyPokedexFetchTask()
         }
 
-        return apiClient.requestResouce("pokemon/\(pokemonName)",
+        return apiClient.requestObject(atRelativePath: "pokemon/\(pokemonName)",
                                              withParams: nil,
                                              completionHandler: { (result: Result<PokeApiPokemon, Error>) in
             switch result {
@@ -122,7 +122,7 @@ class PokeApiPokedex: Pokedex {
             return EmptyPokedexFetchTask()
         }
 
-        return apiClient.requestResouce("pokemon",
+        return apiClient.requestObject(atRelativePath: "pokemon",
                                         withParams: ["offset": "\((pageNumber - 1) * limit)", "limit": "\(limit)"],
                                         completionHandler: { (result: Result<PokeApiPokemonPage, Error>) in
             switch result {
@@ -148,6 +148,23 @@ class PokeApiPokedex: Pokedex {
                 self.pokedexPages[pageNumber] = pokedexPage
                 DispatchQueue.main.async {
                     completionHandler(Result.success(pokedexPage))
+                }
+            }
+        })
+    }
+    
+    func fetchImage(_ imageUrl: String, completionHandler: @escaping (Result<Data, Error>) -> Void) -> PokedexFetchTask {
+        // TODO: Caching
+        
+        return apiClient.requestData(atAbsolutePath: imageUrl, withParams: nil, completionHandler: { (result: Result<Data, Error>) in
+            switch result {
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    completionHandler(Result.failure(error))
+                }
+            case .success(let data):
+                DispatchQueue.main.async {
+                    completionHandler(Result.success(data))
                 }
             }
         })

@@ -19,4 +19,6 @@ protocol Pokedex {
                       completionHandler: @escaping (Result<Pokemon, Error>) -> Void) -> PokedexFetchTask
     func fetchPage(_ pageNumber: Int,
                    completionHandler: @escaping (Result<PokedexPage, Error>) -> Void) -> PokedexFetchTask
+    func fetchImage(_ imageUrl: String,
+                           completionHandler: @escaping (Result<Data, Error>) -> Void) -> PokedexFetchTask
 }

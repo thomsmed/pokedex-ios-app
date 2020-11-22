@@ -16,12 +16,12 @@ enum ApiClientError: Error {
 class PokeApiApiClient: ApiClient {
     static let baseUrl: String = "https://pokeapi.co/api/v2/"
 
-    func requestResouce<T: Decodable>(_ resource: String,
+    func requestObject<T: Decodable>(atRelativePath relativePath: String,
                                       withParams params: [String: String]?,
                                       completionHandler callback:
                                         @escaping (Result<T, Error>) -> Void) -> URLSessionTask {
 
-        var urlString = "\(PokeApiApiClient.baseUrl)\(resource)"
+        var urlString = "\(PokeApiApiClient.baseUrl)\(relativePath)"
 
         if let paramsDictionary = params {
             urlString += "?"
@@ -58,6 +58,36 @@ class PokeApiApiClient: ApiClient {
             }
         })
 
+        task.resume()
+
+        return task
+    }
+    
+    func requestData(atAbsolutePath absolutePath: String,
+                     withParams params: [String : String]?,
+                     completionHandler callback:
+                        @escaping (Result<Data, Error>) -> Void) -> URLSessionTask {
+        let url = URL(string: absolutePath)!
+        
+        let task = URLSession.shared.dataTask(with: url,
+                                   completionHandler: { (data: Data?, response: URLResponse?, error: Error?) in
+
+            if let error = error {
+                return callback(Result.failure(error))
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return callback(Result.failure(ApiClientError.noResponse))
+            }
+
+            guard let mimeType = httpResponse.mimeType,
+                  let data = data else {
+                return callback(Result.failure(ApiClientError.noData))
+            }
+                                    
+            callback(Result.success(data))
+        })
+        
         task.resume()
 
         return task
